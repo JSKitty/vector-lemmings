@@ -8182,75 +8182,50 @@ var Lemmings;
                 });
             });
         }
-        /** return the url hash for the pressent game/group/level-index */
+        /** load game state from localStorage */
         applyQuery() {
             this.gameType = 1;
-            let query = new URLSearchParams(window.location.search);
-            if (query.get("version") || query.get("v")) {
-                let queryVersion = parseInt(query.get("version") || query.get("v"), 10);
-                if (!isNaN(queryVersion) && queryVersion >= 1 && queryVersion <= 2) {
-                    this.gameType = queryVersion;
-                }
-            }
             this.levelGroupIndex = 0;
-            if (query.get("difficulty") || query.get("d")) {
-                let queryDifficulty = parseInt(query.get("difficulty") || query.get("d"), 10);
-                if (!isNaN(queryDifficulty) && queryDifficulty >= 1 && queryDifficulty <= 5) {
-                    this.levelGroupIndex = queryDifficulty - 1;
-                }
-            }
             this.levelIndex = 0;
-            if (query.get("level") || query.get("l")) {
-                let queryLevel = parseInt(query.get("level") || query.get("l"), 10);
-                if (!isNaN(queryLevel) && queryLevel >= 1 && queryLevel <= 30) {
-                    this.levelIndex = queryLevel - 1;
-                }
-            }
             this.gameSpeedFactor = 1;
-            if (query.get("speed") || query.get("s")) {
-                let querySpeed = parseFloat(query.get("speed") || query.get("s"));
-                if (!isNaN(querySpeed) && querySpeed > 0 && querySpeed <= 10) {
-                    this.gameSpeedFactor = querySpeed;
-                }
-            }
             this.cheat = false;
-            if (query.get("cheat") || query.get("c")) {
-                this.cheat = (query.get("cheat") || query.get("c")) === "true";
-            }
-            this.shortcut = false;
-            if (query.get("shortcut") || query.get("_")) {
-                this.shortcut = (query.get("shortcut") || query.get("_")) === "true";
+            try {
+                let saved = localStorage.getItem('lemmings_state');
+                if (saved) {
+                    let state = JSON.parse(saved);
+                    if (state.version >= 1 && state.version <= 2) {
+                        this.gameType = state.version;
+                    }
+                    if (state.difficulty >= 1 && state.difficulty <= 5) {
+                        this.levelGroupIndex = state.difficulty - 1;
+                    }
+                    if (state.level >= 1 && state.level <= 30) {
+                        this.levelIndex = state.level - 1;
+                    }
+                    if (state.speed > 0 && state.speed <= 10) {
+                        this.gameSpeedFactor = state.speed;
+                    }
+                    if (state.cheat) {
+                        this.cheat = true;
+                    }
+                }
+            } catch (e) {
+                console.log('Could not load game state from localStorage');
             }
         }
+        /** save game state to localStorage */
         updateQuery() {
-            if (this.shortcut) {
-                this.setHistoryState({
-                    v: this.gameType,
-                    d: this.levelGroupIndex + 1,
-                    l: this.levelIndex + 1,
-                    s: this.gameSpeedFactor,
-                    c: !!this.cheat,
-                    _: true
-                });
-            } else {
-                this.setHistoryState({
+            try {
+                localStorage.setItem('lemmings_state', JSON.stringify({
                     version: this.gameType,
                     difficulty: this.levelGroupIndex + 1,
                     level: this.levelIndex + 1,
                     speed: this.gameSpeedFactor,
                     cheat: !!this.cheat
-                });
+                }));
+            } catch (e) {
+                console.log('Could not save game state to localStorage');
             }
-        }
-        setHistoryState(state) {
-            history.replaceState(
-              null,
-              null,
-              "?" +
-              Object.keys(state)
-                .map((key) => key + "=" + state[key])
-                .join("&")
-            );
         }
         /** convert a string to a number */
         strToNum(str) {
